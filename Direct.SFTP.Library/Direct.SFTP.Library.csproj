@@ -37,8 +37,9 @@
     <Reference Include="Direct.Shared.Library">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\NICE Systems\Real-Time Designer\Direct.Shared.Library.dll</HintPath>
     </Reference>
-    <Reference Include="log4net">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\NICE Systems\Real-Time Designer\log4net.dll</HintPath>
+    <Reference Include="log4net, Version=2.0.12.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Downloads\log4net\log4net.dll</HintPath>
     </Reference>
     <Reference Include="Renci.SshNet">
       <HintPath>References\Renci.SshNet.dll</HintPath>

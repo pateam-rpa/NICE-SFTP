@@ -18,6 +18,146 @@ namespace Direct.SFTP.Library
     {
         private static readonly ILog logArchitect = LogManager.GetLogger(Loggers.LibraryObjects);
 
+        private static bool sendFile(ConnectionInfo connectionInfo, string destFolder, string sourceFolder, string file)
+        {
+            using (var sftp = new SftpClient(connectionInfo))
+            {
+                try
+                {
+                    sftp.Connect();
+
+                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Connected: " + sftp.IsConnected.ToString()); }
+
+                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Setting source directory: " + destFolder); }
+                    sftp.ChangeDirectory(destFolder);
+
+                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Reading file: " + sourceFolder + file); }
+                    using (var uplfileStream = File.OpenRead(sourceFolder + file))
+                    {
+                        if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - File read, size: " + uplfileStream.Length); }
+                        if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Uploading file:" + file); }
+                        sftp.UploadFile(uplfileStream, file, true);
+                    }
+
+                    destFolder = destFolder.EndsWith(@"/") ? destFolder : destFolder + @"/";
+                    destFolder = destFolder.StartsWith(@"/") ? destFolder : @"/" + destFolder;
+                    if (!sftp.Exists(destFolder + file))
+                    {
+                        logArchitect.Debug("Direct.SFTP.Library - File: " + destFolder + file);
+                        logArchitect.Error("Direct.SFTP.Library - File validation failed");
+                        sftp.Disconnect();
+                        if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnected"); }
+                        return false;
+                    }
+
+                    sftp.Disconnect();
+                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnected"); }
+
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    if (sftp.IsConnected)
+                    {
+                        if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnecting on error"); }
+                        sftp.Disconnect();
+                    }
+                    throw e;
+                }
+                
+            }
+
+        }
+
+        [DirectDom("Send file via SFTP with SSH PrivateKey")]
+        [DirectDomMethod("Send {folder} {file} to {directory} on {host}  with {credentials} {privateKeyFullPath} {passPhrasePrivateKey}")]
+        [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via SFTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written. Uses private key in pem fomat and credentials as authentication.")]
+        public static bool SendFileSFTPWithKey(string sourcefolder, string file, string destfolder, string host, AppLoginInfo creds, string privateKey, AppLoginInfo keyPassPhrase)
+        {
+            try
+            {
+                PrivateKeyFile privateKeyFile = new PrivateKeyFile(privateKey, keyPassPhrase.Password);
+                PrivateKeyFile[] privateKeyFiles = new PrivateKeyFile[] { privateKeyFile };
+                List<AuthenticationMethod> authenticationMethods = new List<AuthenticationMethod>()
+                {
+                    new PasswordAuthenticationMethod(creds.UserName, creds.Password),
+                    new PrivateKeyAuthenticationMethod(creds.UserName, privateKeyFiles)
+                };
+                ConnectionInfo connectionInfo;
+
+                if (host.Contains(":"))
+                {
+                    string server = host.Split(':')[0];
+                    int port = 0;
+                    int.TryParse(host.Split(':')[1], out port);
+                    connectionInfo = new ConnectionInfo(server, port, "sftp", authenticationMethods.ToArray());
+                    logArchitect.Info("Direct.SFTP.Library - Connecting to: " + server + " and port: " + port.ToString());
+                }
+                else
+                {
+                    connectionInfo = new ConnectionInfo(host, "sftp", authenticationMethods.ToArray());
+                    logArchitect.Info("Direct.SFTP.Library - Connecting to: " + host);
+                }
+
+                return sendFile(connectionInfo, destfolder, sourcefolder, file);
+
+            }
+            catch (Exception e)
+            {
+                logArchitect.Error("Direct.SFTP.Library - Send File Exception", e);
+                return false;
+            }
+        }
+
+        [DirectDom("Send file via SFTP with private key auth only")]
+        [DirectDomMethod("Send {folder} {file} to {directory} on {host} with {private key} and {key info}")]
+        [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via SFTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written. Uses private key as authentication method. Key has to be in PEM format. Key info has to contain username and private key passphrase as password")]
+        public static bool SendFileSFTPWithPrivateKeyAuth(string sourcefolder, string file, string destfolder, string host, string privateKeyPath, AppLoginInfo creds) 
+        {
+            try
+            {
+                string privateKeyFileExtension = Path.GetExtension(privateKeyPath);
+
+                if (!privateKeyFileExtension.Contains("pem"))
+                {
+                    throw new Exception("Provided private key file is not of pem extension.");
+                }
+
+                ConnectionInfo connectionInfo;
+                logArchitect.Info("Direct.SFTP.Library - creating private key file instance from file: " + privateKeyPath);
+                PrivateKeyFile privateKey = new PrivateKeyFile(privateKeyPath, creds.Password);
+                logArchitect.Info("Direct.SFTP.Library - private key successfully added");
+                logArchitect.Info("Direct.SFTP.Library - adding key to private keys array");
+                PrivateKeyFile[] privateKeyFiles = new PrivateKeyFile[] { privateKey };
+                logArchitect.Info("Direct.SFTP.Library - file successully added to the array, length: " + privateKeyFiles.Length);
+
+                if (host.Contains(":"))
+                {
+                    string server = host.Split(':')[0];
+                    int port = 0;
+                    int.TryParse(host.Split(':')[1], out port);
+                    logArchitect.Info("Direct.SFTP.Library - Creating connection info to: " + server + " and port: " + port.ToString());
+                    connectionInfo = new ConnectionInfo(server, port, creds.UserName, new PrivateKeyAuthenticationMethod(creds.UserName, privateKeyFiles));
+                    logArchitect.Info("Direct.SFTP.Library - Connecting to: " + server + " and port: " + port.ToString());
+                }
+                else
+                {
+                    logArchitect.Info("Direct.SFTP.Library - Creating connection info to: " + host);
+                    connectionInfo = new ConnectionInfo(host, creds.UserName, new PrivateKeyAuthenticationMethod(creds.UserName, privateKeyFiles));
+                    logArchitect.Info("Direct.SFTP.Library - Connecting to: " + host);
+                }
+
+                return sendFile(connectionInfo, destfolder, sourcefolder, file);
+
+            }
+            catch (Exception e)
+            {
+                logArchitect.Error("Direct.SFTP.Library - Send File Exception", e);
+                return false;
+            }
+        }
+
+
         [DirectDom("Send file via SFTP")]
         [DirectDomMethod("Send {folder} {file} to {directory} on {host}  with {credentials}")]
         [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via SFTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written")]
@@ -41,34 +181,7 @@ namespace Direct.SFTP.Library
                     logArchitect.Info("Direct.SFTP.Library - Connecting to: " + host);
                 }
 
-                using (var sftp = new SftpClient(connectionInfo))
-                {
-                    sftp.Connect();
-
-                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Setting source directory: " + destfolder); }
-                    sftp.ChangeDirectory(destfolder);
-
-                    using (var uplfileStream = System.IO.File.OpenRead(sourcefolder + file))
-                    {
-                        if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Uploading file:" + file); }
-                        sftp.UploadFile(uplfileStream, file, true);
-                    }
-
-                    destfolder = destfolder.EndsWith(@"/") ? destfolder : destfolder + @"/";
-                    destfolder = destfolder.StartsWith(@"/") ? destfolder : @"/" + destfolder;
-                    if (!sftp.Exists(destfolder + file))
-                    {
-                        logArchitect.Debug("Direct.SFTP.Library - File: " + destfolder + file);
-                        logArchitect.Error("Direct.SFTP.Library - File validation failed");
-                        sftp.Disconnect();
-                        if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnected"); }
-                        return false;
-                    }
-
-                    sftp.Disconnect();
-                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnected"); }
-                }
-                return true;
+                return sendFile(connectionInfo, destfolder, sourcefolder, file);
             }
             catch (Exception e)
             {
@@ -231,124 +344,6 @@ namespace Direct.SFTP.Library
 
     }
 }
-
-
-    [DirectSealed]
-    [DirectDom("FTP", "FileTransfer", false)]
-    [ParameterType(false)]
-    public class FTP 
-    {
-        private static readonly ILog logArchitect = LogManager.GetLogger(Loggers.LibraryObjects);
-        [DirectDom("Send file via FTP")]
-        [DirectDomMethod("Send {folder} {file} to {directory} on {host}  with {credentials}")]
-        [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via FTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written")]
-        public static bool SendFileFTP(string sourcefolder, string file, string destfolder, string host, AppLoginInfo creds)
-        {
-            try { 
-                WebClient client = new WebClient();
-                client.Credentials = new NetworkCredential(creds.UserName, creds.Password);
-                if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.FTP.Library - Upload file:" + file + " from host: " + host + sourcefolder + " to: " + destfolder); }
-                client.UploadFile(
-                    "ftp://" + host + destfolder + file, sourcefolder + file);
-                return true;
-            }
-            catch (Exception e)
-            {
-                logArchitect.Error("Direct.FTP.Library - Upload File Exception", e);
-                return false;
-            }
-}
-
-        [DirectDom("Download file from FTP")]
-        [DirectDomMethod("Download {file} from {directory} on {host} to {filepath}  with {credentials}")]
-        [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via FTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written")]
-        public static bool DownloadFileFTP(string file, string sourcefolder, string host, string destfolder, AppLoginInfo creds)
-        {
-            try
-            {
-                WebClient client = new WebClient();
-                client.Credentials = new NetworkCredential(creds.UserName, creds.Password);
-                if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.FTP.Library - Download file:" + file + " from host: " + host + sourcefolder + " to: " + destfolder); }
-                client.DownloadFile(
-                    "ftp://" + host + sourcefolder + file, destfolder);
-                return true;
-            }
-            catch (Exception e)
-            {
-                logArchitect.Error("Direct.FTP.Library - Download File Exception", e);
-                return false;
-            }
-}
-
-
-        [DirectDom("Check if file exists via FTP")]
-        [DirectDomMethod("Check if {file} exists in {directory} on {host} with {credentials}")]
-        [MethodDescription("Validate if a file exists via FTP")]
-        public static bool ValidateIfFileExistsFTP(string file, string destfolder, string host, AppLoginInfo creds)
-        {
-            var request = (FtpWebRequest)WebRequest.Create
-                ("ftp://" + host + destfolder + file);
-            request.Credentials = new NetworkCredential(creds.UserName, creds.Password);
-            request.Method = WebRequestMethods.Ftp.GetFileSize;
-
-            try
-            {
-                FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-                if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.FTP.Library - file:" + file + " Exists"); }
-                return true;
-            }
-            catch (WebException e)
-            {
-                FtpWebResponse response = (FtpWebResponse)e.Response;
-                if (response.StatusCode ==
-                    FtpStatusCode.ActionNotTakenFileUnavailable)
-                {
-                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.FTP.Library - file:" + file + " Does not exists"); }
-                    return false;
-                }
-                else
-                {
-                    logArchitect.Error("Direct.FTP.Library - File Exist Exception", e);
-                    return false; // false negative
-                }
-            }
-        }
-
-        [DirectDom("Delete file via FTP")]
-        [DirectDomMethod("Delete {file} in {directory} on {host} with {credentials}")]
-        [MethodDescription("Delete a file via FTP")]
-        public static bool DeleteFileFTP(string file, string destfolder, string host, AppLoginInfo creds)
-        {
-            try 
-            {
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create("ftp://" + host + destfolder + file);
-
-                request.Credentials = new NetworkCredential(creds.UserName, creds.Password);
-
-                request.Method = WebRequestMethods.Ftp.DeleteFile;
-                FtpWebResponse response = (FtpWebResponse)request.GetResponse();
-                Console.WriteLine("Delete status: {0}", response.StatusDescription);
-                response.Close();
-                if (response.StatusCode == FtpStatusCode.FileActionOK)
-                {
-                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.FTP.Library - file:" + file + " Deleted"); }
-                    return true;
-
-                }
-                else
-                {
-                    if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.FTP.Library - file:" + file + " not deleted: " + response.StatusDescription); }
-                    return false;
-                }
-            }
-            catch (Exception e)
-            {
-                logArchitect.Error("Direct.FTP.Library - Delete File Exception", e);
-                return false;
-            }
-
-        }
-    }
 
 
 

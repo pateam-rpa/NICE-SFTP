@@ -16,3 +16,21 @@ C:\Users\martijn\source\repos\Direct.SFTP.Library\Direct.SFTP.Library\obj\Debug\
 C:\Users\martijn\source\repos\Direct.SFTP.Library\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.csproj.CopyComplete
 C:\Users\martijn\source\repos\Direct.SFTP.Library\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.dll
 C:\Users\martijn\source\repos\Direct.SFTP.Library\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.pdb
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Direct.SFTP.Library.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Direct.SFTP.Library.pdb
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Direct.Shared.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Direct.Shared.Library.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\log4net.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Renci.SshNet.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Direct.Interface.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Direct.WebServiceProxy.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\RESTSender.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Microsoft.Web.Services2.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Renci.SshNet.pdb
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\bin\Debug\Renci.SshNet.xml
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.csproj.AssemblyReference.cache
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.csproj.CoreCompileInputs.cache
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.csproj.CopyComplete
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.dll
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Repos\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.pdb
