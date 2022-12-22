@@ -49,3 +49,4 @@ C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Documents\GitHub\NIC
 C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Documents\GitHub\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.csproj.CopyComplete
 C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Documents\GitHub\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.dll
 C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Documents\GitHub\NICE-SFTP\Direct.SFTP.Library\obj\Debug\Direct.SFTP.Library.pdb
+C:\Users\Mateusz\OneDrive - PA Team Software Consulting Ltd\Documents\GitHub\NICE-SFTP\Direct.SFTP.Library\bin\Debug\log4net.dll
