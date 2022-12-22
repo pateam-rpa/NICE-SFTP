@@ -18,8 +18,9 @@ namespace Direct.SFTP.Library
     {
         private static readonly ILog logArchitect = LogManager.GetLogger(Loggers.LibraryObjects);
 
-        private static bool sendFile(ConnectionInfo connectionInfo, string destFolder, string sourceFolder, string file)
+        private static int sendFile(ConnectionInfo connectionInfo, string destFolder, string sourceFolder, string file)
         {
+            int result = 0;
             using (var sftp = new SftpClient(connectionInfo))
             {
                 try
@@ -37,6 +38,7 @@ namespace Direct.SFTP.Library
                         if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - File read, size: " + uplfileStream.Length); }
                         if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Uploading file:" + file); }
                         sftp.UploadFile(uplfileStream, file, true);
+                        result = 1;
                     }
 
                     destFolder = destFolder.EndsWith(@"/") ? destFolder : destFolder + @"/";
@@ -47,13 +49,14 @@ namespace Direct.SFTP.Library
                         logArchitect.Error("Direct.SFTP.Library - File validation failed");
                         sftp.Disconnect();
                         if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnected"); }
-                        return false;
+                        return result;
                     }
 
                     sftp.Disconnect();
                     if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnected"); }
+                    result = 2;
 
-                    return true;
+                    return result;
                 }
                 catch (Exception e)
                 {
@@ -62,9 +65,9 @@ namespace Direct.SFTP.Library
                         if (logArchitect.IsDebugEnabled) { logArchitect.Debug("Direct.SFTP.Library - Disconnecting on error"); }
                         sftp.Disconnect();
                     }
-                    throw e;
+                    return result;
                 }
-                
+
             }
 
         }
@@ -72,8 +75,9 @@ namespace Direct.SFTP.Library
         [DirectDom("Send file via SFTP with SSH PrivateKey")]
         [DirectDomMethod("Send {folder} {file} to {directory} on {host}  with {credentials} {privateKeyFullPath} {passPhrasePrivateKey}")]
         [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via SFTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written. Uses private key in pem fomat and credentials as authentication.")]
-        public static bool SendFileSFTPWithKey(string sourcefolder, string file, string destfolder, string host, AppLoginInfo creds, string privateKey, AppLoginInfo keyPassPhrase)
+        public static int SendFileSFTPWithKey(string sourcefolder, string file, string destfolder, string host, AppLoginInfo creds, string privateKey, AppLoginInfo keyPassPhrase)
         {
+            int result = 0;
             try
             {
                 PrivateKeyFile privateKeyFile = new PrivateKeyFile(privateKey, keyPassPhrase.Password);
@@ -99,21 +103,24 @@ namespace Direct.SFTP.Library
                     logArchitect.Info("Direct.SFTP.Library - Connecting to: " + host);
                 }
 
-                return sendFile(connectionInfo, destfolder, sourcefolder, file);
+                result = sendFile(connectionInfo, destfolder, sourcefolder, file);
+
+                return result;
 
             }
             catch (Exception e)
             {
                 logArchitect.Error("Direct.SFTP.Library - Send File Exception", e);
-                return false;
+                return result;
             }
         }
 
         [DirectDom("Send file via SFTP with private key auth only")]
         [DirectDomMethod("Send {folder} {file} to {directory} on {host} with {private key} and {key info}")]
         [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via SFTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written. Uses private key as authentication method. Key has to be in PEM format. Key info has to contain username and private key passphrase as password")]
-        public static bool SendFileSFTPWithPrivateKeyAuth(string sourcefolder, string file, string destfolder, string host, string privateKeyPath, AppLoginInfo creds) 
+        public static int SendFileSFTPWithPrivateKeyAuth(string sourcefolder, string file, string destfolder, string host, string privateKeyPath, AppLoginInfo creds)
         {
+            int result = 0;
             try
             {
                 string privateKeyFileExtension = Path.GetExtension(privateKeyPath);
@@ -147,13 +154,15 @@ namespace Direct.SFTP.Library
                     logArchitect.Info("Direct.SFTP.Library - Connecting to: " + host);
                 }
 
-                return sendFile(connectionInfo, destfolder, sourcefolder, file);
+                result = sendFile(connectionInfo, destfolder, sourcefolder, file);
+
+                return result;
 
             }
             catch (Exception e)
             {
                 logArchitect.Error("Direct.SFTP.Library - Send File Exception", e);
-                return false;
+                return result;
             }
         }
 
@@ -161,8 +170,9 @@ namespace Direct.SFTP.Library
         [DirectDom("Send file via SFTP")]
         [DirectDomMethod("Send {folder} {file} to {directory} on {host}  with {credentials}")]
         [MethodDescription("Send a file from a folder (e.g. D:/MyFolder/) via SFTP to the destination host and directory (e.g. /MyFolder/) and validate if it was written")]
-        public static bool SendFileSFTP(string sourcefolder, string file, string destfolder, string host, AppLoginInfo creds)
+        public static int SendFileSFTP(string sourcefolder, string file, string destfolder, string host, AppLoginInfo creds)
         {
+            int result = 0;
             try
             {
                 ConnectionInfo connectionInfo;
@@ -181,14 +191,16 @@ namespace Direct.SFTP.Library
                     logArchitect.Info("Direct.SFTP.Library - Connecting to: " + host);
                 }
 
-                return sendFile(connectionInfo, destfolder, sourcefolder, file);
+                result = sendFile(connectionInfo, destfolder, sourcefolder, file);
+
+                return result;
             }
             catch (Exception e)
             {
                 logArchitect.Error("Direct.SFTP.Library - Send File Exception", e);
-                return false;
+                return result;
             }
-        } 
+        }
 
         [DirectDom("Check if file exists via SFTP")]
         [DirectDomMethod("Check if {file} exists in {directory} on {host} with {credentials}")]
@@ -305,7 +317,8 @@ namespace Direct.SFTP.Library
         public static bool DownloadFileSFTP(string file, string sourcefolder, string host, string destfolder, AppLoginInfo creds)
         {
 
-            try {
+            try
+            {
                 ConnectionInfo connectionInfo;
 
                 if (host.Contains(":"))
@@ -331,7 +344,7 @@ namespace Direct.SFTP.Library
                         sftp.DownloadFile(sourcefolder + file, file1);
                         return true;
                     }
-                    
+
 
                 }
             }
